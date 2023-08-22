@@ -8,7 +8,6 @@ export function Loading(): ReactElement {
 
   const display = isFetching ? 'inherit' : 'none';
 
-  console.log('RETURNING');
   return (
     <Spinner
       thickness="4px"
