@@ -67,11 +67,10 @@ export function useAppointments(): UseAppointments {
   const queryClient = useQueryClient();
   useEffect(() => {
     const nextMonthYear = getNewMonthYear(monthYear, 1);
-    queryClient.prefetchQuery([
-      queryKeys.appointments,
-      nextMonthYear.year,
-      nextMonthYear.month,
-    ]);
+    queryClient.prefetchQuery(
+      [queryKeys.appointments, nextMonthYear.year, nextMonthYear.month],
+      () => getAppointments(nextMonthYear.year, nextMonthYear.month),
+    );
   }, [queryClient, monthYear]);
 
   // Notes:
