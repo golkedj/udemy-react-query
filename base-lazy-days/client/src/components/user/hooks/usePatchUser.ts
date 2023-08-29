@@ -1,6 +1,7 @@
 import { useCustomToast } from 'components/app/hooks/useCustomToast';
 import jsonpatch from 'fast-json-patch';
-import { UseMutateFunction, useMutation } from 'react-query';
+import { UseMutateFunction, useMutation, useQueryClient } from 'react-query';
+import { queryKeys } from 'react-query/constants';
 
 import type { User } from '../../../../../shared/types';
 import { axiosInstance, getJWTHeader } from '../../../axiosInstance';
@@ -35,10 +36,36 @@ export function usePatchUser(): UseMutateFunction<
 > {
   const { user, updateUser } = useUser();
   const toast = useCustomToast();
+  const queryClient = useQueryClient();
 
   const { mutate: patchUser } = useMutation(
     (newUserData: User) => patchUserOnServer(newUserData, user),
     {
+      // onMutate returns context that is passed to onError
+      onMutate: async (newData: User | null) => {
+        // cancel any outgoing queries for user data, so old server data
+        // doesn't overwrite our optimistic update
+        queryClient.cancelQueries(queryKeys.user);
+
+        // snapshot of previous user value
+        const previousUserData: User = queryClient.getQueryData(queryKeys.user);
+
+        // optimistically update the cache with new user value
+        updateUser(newData);
+
+        // return context with snapshotted value
+        return { previousUserData };
+      },
+      onError: (error, newData, context) => {
+        // roll back cache to saved value
+        if (context.previousUserData) {
+          updateUser(context.previousUserData);
+          toast({
+            title: 'Update failed; restoring previous values',
+            status: 'warning',
+          });
+        }
+      },
       onSuccess: (userData: User | null) => {
         if (user) {
           updateUser(userData);
@@ -47,6 +74,10 @@ export function usePatchUser(): UseMutateFunction<
             status: 'success',
           });
         }
+      },
+      onSettled: () => {
+        // invalidate user query to make sure we're in sync with server data
+        queryClient.invalidateQueries(queryKeys.user);
       },
     },
   );
