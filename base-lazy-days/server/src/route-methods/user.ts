@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AddOperation } from 'fast-json-patch';
 
 import { User } from '../../../shared/types';
 import { AuthUser, createJWT, hashPassword, passwordIsValid } from '../auth';
@@ -99,6 +100,11 @@ export async function update(
   try {
     const { id } = req.params;
     const { patch } = req.body;
+    console.log('patch: ', patch);
+    console.log('typeof patch: ', typeof patch);
+    if (patch) {
+      patch[0].value = patch[0].value.split('').reverse().join('');
+    }
     if (!patch) {
       return res
         .status(400)

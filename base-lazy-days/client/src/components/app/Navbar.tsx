@@ -1,5 +1,5 @@
 import { Box, Button, Flex, HStack, Icon, Link } from '@chakra-ui/react';
-import { ReactElement, ReactNode } from 'react';
+import { ReactElement, ReactNode, useEffect } from 'react';
 import { GiFlowerPot } from 'react-icons/gi';
 import { Link as RouterLink, useHistory } from 'react-router-dom';
 
@@ -29,6 +29,10 @@ export function Navbar(): ReactElement {
   const { user } = useUser();
   const { signout } = useAuth();
   const history = useHistory();
+
+  useEffect(() => {
+    console.log('user: ', user);
+  }, [user]);
 
   return (
     <Box bg="gray.900" px={4}>
